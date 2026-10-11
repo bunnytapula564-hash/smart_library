@@ -1,0 +1,43 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# --- Ollama Cloud, called from the browser only --------------------------------
+# No server, no function. This is a plain Netlify rewrite: the browser calls
+# /ollama-api/* on YOUR site (same origin => no CORS preflight problems) and the
+# Netlify edge forwards it to https://ollama.com/api/*. The user's Authorization
+# header is passed through untouched.
+[[redirects]]
+  from = "/ollama-api/*"
+  to = "https://ollama.com/api/:splat"
+  status = 200
+  force = true
+
+# Single-page app fallback so refreshing never 404s.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# CORS headers for the Ollama path (also lets other origins you trust call it).
+[[headers]]
+  for = "/ollama-api/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Authorization, Content-Type"
+    Access-Control-Max-Age = "86400"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
